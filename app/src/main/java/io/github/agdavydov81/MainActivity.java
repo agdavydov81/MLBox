@@ -1,5 +1,6 @@
 package io.github.agdavydov81;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -12,8 +13,8 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -74,7 +75,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void OnClassificationSelected() {
-        Toast.makeText(this, "Classification selected", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, ClassificationActivity.class);
+        startActivity(intent);
     }
 
     public void OnRegressionSelected() {

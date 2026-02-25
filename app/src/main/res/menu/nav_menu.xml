@@ -2,11 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_classification"
-        android:title="Classification" />
+        android:title="@string/classification" />
     <item
         android:id="@+id/nav_regression"
-        android:title="Regression" />
+        android:title="@string/regression" />
     <item
         android:id="@+id/nav_clusterization"
-        android:title="Clusterization" />
+        android:title="@string/clusterization" />
 </menu>

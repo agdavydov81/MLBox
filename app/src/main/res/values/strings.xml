@@ -2,4 +2,7 @@
     <string name="app_name">MLBox</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="classification">Classification</string>
+    <string name="regression">Regression</string>
+    <string name="clusterization">Clusterization</string>
 </resources>

@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Classification"
+                android:text="@string/classification"
                 android:textAppearance="?attr/textAppearanceHeadline6" />
 
         </com.google.android.material.card.MaterialCardView>
@@ -62,7 +62,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Regression"
+                android:text="@string/regression"
                 android:textAppearance="?attr/textAppearanceHeadline6" />
 
         </com.google.android.material.card.MaterialCardView>
@@ -85,7 +85,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Clusterization"
+                android:text="@string/clusterization"
                 android:textAppearance="?attr/textAppearanceHeadline6" />
 
         </com.google.android.material.card.MaterialCardView>

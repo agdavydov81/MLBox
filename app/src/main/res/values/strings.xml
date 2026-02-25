@@ -5,4 +5,5 @@
     <string name="classification">Classification</string>
     <string name="regression">Regression</string>
     <string name="clusterization">Clusterization</string>
+    <string name="machine_learning_tasks">Machine Learning Tasks</string>
 </resources>

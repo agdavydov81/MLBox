@@ -1,12 +1,16 @@
 package io.github.agdavydov81;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.material.card.MaterialCardView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,5 +24,15 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        MaterialCardView classificationCard = findViewById(R.id.classification_card);
+        MaterialCardView regressionCard = findViewById(R.id.regression_card);
+        MaterialCardView clusteringCard = findViewById(R.id.clustering_card);
+
+        classificationCard.setOnClickListener(v -> Toast.makeText(MainActivity.this, "Classification Clicked", Toast.LENGTH_SHORT).show());
+
+        regressionCard.setOnClickListener(v -> Toast.makeText(MainActivity.this, "Regression Clicked", Toast.LENGTH_SHORT).show());
+
+        clusteringCard.setOnClickListener(v -> Toast.makeText(MainActivity.this, "Clusterization Clicked", Toast.LENGTH_SHORT).show());
     }
 }

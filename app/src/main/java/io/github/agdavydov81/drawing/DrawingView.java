@@ -67,7 +67,7 @@ public class DrawingView extends View {
         canvas.restore();
     }
 
-    private static final int PREFERRED_GRID_LINES = 10;
+    private static final int PREFERRED_GRID_LINES = 12;
 
     private static final float[] gridFactors = new float[] {1, 2, 5};
 

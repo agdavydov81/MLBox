@@ -17,6 +17,7 @@ public class DrawingView extends View {
 
     private final Paint paint = new Paint();
     private final Paint gridPaint = new Paint();
+    private final Paint textPaint = new Paint();
     private final List<PointF> points = new ArrayList<>();
 
     private float scaleFactor = 1.0f;
@@ -36,6 +37,9 @@ public class DrawingView extends View {
 
         gridPaint.setColor(Color.LTGRAY);
         gridPaint.setStrokeWidth(1f);
+
+        textPaint.setColor(Color.DKGRAY);
+        textPaint.setAntiAlias(true);
 
         scaleGestureDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
@@ -69,14 +73,20 @@ public class DrawingView extends View {
         final float right = (width - translationX) / scaleFactor;
         final float bottom = (height - translationY) / scaleFactor;
 
-        // Draw vertical lines
+        textPaint.setTextSize(28 / scaleFactor);
+
+        // Draw vertical lines and labels
         for (float x = (float) (Math.floor(left / gridSize) * gridSize); x < right; x += gridSize) {
             canvas.drawLine(x, top, x, bottom, gridPaint);
+            String text = String.valueOf((int) x);
+            canvas.drawText(text, x + (5 / scaleFactor), top + (25 / scaleFactor), textPaint);
         }
 
-        // Draw horizontal lines
+        // Draw horizontal lines and labels
         for (float y = (float) (Math.floor(top / gridSize) * gridSize); y < bottom; y += gridSize) {
             canvas.drawLine(left, y, right, y, gridPaint);
+            String text = String.valueOf((int) y);
+            canvas.drawText(text, left + (5 / scaleFactor), y - (5 / scaleFactor), textPaint);
         }
     }
 
@@ -97,8 +107,8 @@ public class DrawingView extends View {
                 if (!scaleGestureDetector.isInProgress()) {
                     final float dx = event.getX() - lastTouchX;
                     final float dy = event.getY() - lastTouchY;
-                    
-                    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+
+                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
                         isDragging = true;
                     }
 

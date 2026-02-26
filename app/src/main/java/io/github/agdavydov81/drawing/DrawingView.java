@@ -49,12 +49,17 @@ public class DrawingView extends View {
         super.onDraw(canvas);
 
         canvas.save();
+
+        // --- Cartesian coordinate system setup ---
+        canvas.translate(0, getHeight());
+        canvas.scale(1, -1);
+        // ----------------------------------------
+
         canvas.translate(translationX, translationY);
         canvas.scale(scaleFactor, scaleFactor);
 
         drawGrid(canvas);
 
-        // Adjust point size based on zoom
         for (PointF point : points) {
             canvas.drawCircle(point.x, point.y, 10 / scaleFactor, paint);
         }
@@ -62,31 +67,46 @@ public class DrawingView extends View {
         canvas.restore();
     }
 
+    private static final int PREFERRED_GRID_LINES = 10;
+
+    private static final float[] gridFactors = new float[] {1, 2, 5};
+
     private void drawGrid(Canvas canvas) {
-        final float gridSize = 100f;
         final int width = getWidth();
         final int height = getHeight();
 
-        // Calculate the visible area in world coordinates
         final float left = -translationX / scaleFactor;
-        final float top = -translationY / scaleFactor;
         final float right = (width - translationX) / scaleFactor;
-        final float bottom = (height - translationY) / scaleFactor;
+        final float bottom = -translationY / scaleFactor;
+        final float top = (height - translationY) / scaleFactor;
+
+        final var scaledSize = Math.max(width, height) / scaleFactor;
+        float gridSize125 = Math.round(Math.log10(scaledSize / PREFERRED_GRID_LINES) * gridFactors.length);
+        float gridSize = (float)(Math.pow(10.0, (long)(gridSize125 / gridFactors.length)) *
+                gridFactors[(int) gridSize125 % gridFactors.length]);
 
         textPaint.setTextSize(28 / scaleFactor);
 
-        // Draw vertical lines and labels
+        // Draw vertical lines and labels (X-axis)
         for (float x = (float) (Math.floor(left / gridSize) * gridSize); x < right; x += gridSize) {
             canvas.drawLine(x, top, x, bottom, gridPaint);
             String text = String.valueOf((int) x);
-            canvas.drawText(text, x + (5 / scaleFactor), top + (25 / scaleFactor), textPaint);
+            canvas.save();
+            canvas.translate(x, bottom);
+            canvas.scale(1, -1); // Flip back to draw text upright
+            canvas.drawText(text, (5 / scaleFactor), -(5 / scaleFactor), textPaint);
+            canvas.restore();
         }
 
-        // Draw horizontal lines and labels
-        for (float y = (float) (Math.floor(top / gridSize) * gridSize); y < bottom; y += gridSize) {
+        // Draw horizontal lines and labels (Y-axis)
+        for (float y = (float) (Math.floor(bottom / gridSize) * gridSize); y < top; y += gridSize) {
             canvas.drawLine(left, y, right, y, gridPaint);
             String text = String.valueOf((int) y);
-            canvas.drawText(text, left + (5 / scaleFactor), y - (5 / scaleFactor), textPaint);
+            canvas.save();
+            canvas.translate(left, y);
+            canvas.scale(1, -1); // Flip back to draw text upright
+            canvas.drawText(text, (5 / scaleFactor), -(5 / scaleFactor), textPaint);
+            canvas.restore();
         }
     }
 
@@ -114,7 +134,7 @@ public class DrawingView extends View {
 
                     if (isDragging) {
                         translationX += dx;
-                        translationY += dy;
+                        translationY -= dy; // Invert dy for Cartesian panning
                         invalidate();
                     }
                 }
@@ -124,9 +144,9 @@ public class DrawingView extends View {
             }
             case MotionEvent.ACTION_UP: {
                 if (!isDragging && !scaleGestureDetector.isInProgress()) {
-                    final float x = (event.getX() - translationX) / scaleFactor;
-                    final float y = (event.getY() - translationY) / scaleFactor;
-                    points.add(new PointF(x, y));
+                    final float worldX = (event.getX() - translationX) / scaleFactor;
+                    final float worldY = (getHeight() - event.getY() - translationY) / scaleFactor;
+                    points.add(new PointF(worldX, worldY));
                     invalidate();
                 }
                 isDragging = false;

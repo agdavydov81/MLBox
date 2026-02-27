@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -15,10 +16,25 @@ import java.util.List;
 
 public class DrawingView extends View {
 
+    public enum ShapeType {
+        CIRCLE, SQUARE, TRIANGLE
+    }
+
+    private static class DrawingPoint {
+        PointF point;
+        ShapeType type;
+
+        DrawingPoint(PointF point, ShapeType type) {
+            this.point = point;
+            this.type = type;
+        }
+    }
+
     private final Paint paint = new Paint();
     private final Paint gridPaint = new Paint();
     private final Paint textPaint = new Paint();
-    private final List<PointF> points = new ArrayList<>();
+    private final List<DrawingPoint> points = new ArrayList<>();
+    private ShapeType currentShapeType = ShapeType.CIRCLE;
 
     private float scaleFactor = 1.0f;
     private float translationX = 0.0f;
@@ -27,6 +43,7 @@ public class DrawingView extends View {
     private float lastTouchX;
     private float lastTouchY;
     private boolean isDragging = false;
+    private boolean wasScaling = false;
 
     private final ScaleGestureDetector scaleGestureDetector;
 
@@ -42,6 +59,10 @@ public class DrawingView extends View {
         textPaint.setAntiAlias(true);
 
         scaleGestureDetector = new ScaleGestureDetector(context, new ScaleListener());
+    }
+
+    public void setShapeType(ShapeType type) {
+        this.currentShapeType = type;
     }
 
     @Override
@@ -60,15 +81,34 @@ public class DrawingView extends View {
 
         drawGrid(canvas);
 
-        for (PointF point : points) {
-            canvas.drawCircle(point.x, point.y, 10 / scaleFactor, paint);
+        float size = 10 / scaleFactor;
+        for (DrawingPoint dp : points) {
+            drawShape(canvas, dp.point.x, dp.point.y, size, dp.type);
         }
 
         canvas.restore();
     }
 
-    private static final int PREFERRED_GRID_LINES = 12;
+    private void drawShape(Canvas canvas, float x, float y, float size, ShapeType type) {
+        switch (type) {
+            case CIRCLE:
+                canvas.drawCircle(x, y, size, paint);
+                break;
+            case SQUARE:
+                canvas.drawRect(x - size, y - size, x + size, y + size, paint);
+                break;
+            case TRIANGLE:
+                Path path = new Path();
+                path.moveTo(x, y + size); // Top
+                path.lineTo(x - size, y - size); // Bottom Left
+                path.lineTo(x + size, y - size); // Bottom Right
+                path.close();
+                canvas.drawPath(path, paint);
+                break;
+        }
+    }
 
+    private static final int PREFERRED_GRID_LINES = 12;
     private static final float[] gridFactors = new float[] {1, 2, 5};
 
     private void drawGrid(Canvas canvas) {
@@ -86,7 +126,6 @@ public class DrawingView extends View {
                 gridFactors[(int) gridSize125 % gridFactors.length]);
 
         textPaint.setTextSize(28 / scaleFactor);
-
         gridPaint.setStrokeWidth(1f / scaleFactor);
 
         // Draw vertical lines and labels (X-axis)
@@ -95,7 +134,7 @@ public class DrawingView extends View {
             String text = String.valueOf((int) x);
             canvas.save();
             canvas.translate(x, bottom);
-            canvas.scale(1, -1); // Flip back to draw text upright
+            canvas.scale(1, -1);
             canvas.drawText(text, (5 / scaleFactor), -(5 / scaleFactor), textPaint);
             canvas.restore();
         }
@@ -106,7 +145,7 @@ public class DrawingView extends View {
             String text = String.valueOf((int) y);
             canvas.save();
             canvas.translate(left, y);
-            canvas.scale(1, -1); // Flip back to draw text upright
+            canvas.scale(1, -1);
             canvas.drawText(text, (5 / scaleFactor), -(5 / scaleFactor), textPaint);
             canvas.restore();
         }
@@ -116,27 +155,27 @@ public class DrawingView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         scaleGestureDetector.onTouchEvent(event);
 
-        final int action = event.getAction();
-
-        switch (action & MotionEvent.ACTION_MASK) {
+        switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 lastTouchX = event.getX();
                 lastTouchY = event.getY();
                 isDragging = false;
+                wasScaling = false;
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
-                if (!scaleGestureDetector.isInProgress()) {
+                // Only allow panning if we are not currently scaling and haven't scaled during this gesture
+                if (!scaleGestureDetector.isInProgress() && !wasScaling) {
                     final float dx = event.getX() - lastTouchX;
                     final float dy = event.getY() - lastTouchY;
 
-                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
                         isDragging = true;
                     }
 
                     if (isDragging) {
                         translationX += dx;
-                        translationY -= dy; // Invert dy for Cartesian panning
+                        translationY -= dy;
                         invalidate();
                     }
                 }
@@ -145,13 +184,14 @@ public class DrawingView extends View {
                 break;
             }
             case MotionEvent.ACTION_UP: {
-                if (!isDragging && !scaleGestureDetector.isInProgress()) {
+                if (!isDragging && !wasScaling && !scaleGestureDetector.isInProgress()) {
                     final float worldX = (event.getX() - translationX) / scaleFactor;
                     final float worldY = (getHeight() - event.getY() - translationY) / scaleFactor;
-                    points.add(new PointF(worldX, worldY));
+                    points.add(new DrawingPoint(new PointF(worldX, worldY), currentShapeType));
                     invalidate();
                 }
                 isDragging = false;
+                wasScaling = false;
                 break;
             }
         }
@@ -161,9 +201,29 @@ public class DrawingView extends View {
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            wasScaling = true;
+            isDragging = false; // Stop any ongoing drag when scaling starts
+            return true;
+        }
+
+        @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            scaleFactor *= detector.getScaleFactor();
-            scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 10.0f));
+            float f = detector.getScaleFactor();
+            float newScaleFactor = Math.max(0.1f, Math.min(scaleFactor * f, 10.0f));
+
+            // Adjust translation to zoom into the center of the screen
+            float cartCenterX = getWidth() / 2.0f;
+            float cartCenterY = getHeight() / 2.0f;
+
+            // Re-calculate the actual ratio based on clamped scale to avoid coordinate drift
+            float actualF = newScaleFactor / scaleFactor;
+
+            translationX = translationX * actualF + cartCenterX * (1 - actualF);
+            translationY = translationY * actualF + cartCenterY * (1 - actualF);
+
+            scaleFactor = newScaleFactor;
+
             invalidate();
             return true;
         }

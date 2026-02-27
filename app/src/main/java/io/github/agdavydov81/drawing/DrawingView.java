@@ -87,6 +87,8 @@ public class DrawingView extends View {
 
         textPaint.setTextSize(28 / scaleFactor);
 
+        gridPaint.setStrokeWidth(1f / scaleFactor);
+
         // Draw vertical lines and labels (X-axis)
         for (float x = (float) (Math.floor(left / gridSize) * gridSize); x < right; x += gridSize) {
             canvas.drawLine(x, top, x, bottom, gridPaint);
